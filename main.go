@@ -24,6 +24,27 @@ type Product struct {
 	Stock int    `json:"stock" required:"true" min:"1" max:"100"`
 }
 
+type NewProductResponse struct {
+	Name  string `json:"name"`
+	Price int    `json:"price"`
+}
+
+type EndpointResponse struct {
+	Code int         `json:"code"`
+	Msg  string      `json:"msg"`
+	Data interface{} `json:"data"`
+}
+
+func EndpointResponses(w http.ResponseWriter, response EndpointResponse) {
+	w.Header().Set("Content-Type", "application/json")
+	if response.Code != 200 {
+		w.WriteHeader(http.StatusBadRequest)
+	} else {
+		w.WriteHeader(http.StatusOK)
+	}
+	json.NewEncoder(w).Encode(response)
+}
+
 func ValidateStruct(s interface{}) error {
 	val := reflect.ValueOf(s)
 	if val.Kind() != reflect.Struct {
@@ -120,18 +141,33 @@ func main() {
 		err := json.NewDecoder(r.Body).Decode(&product)
 		if err != nil {
 			log.Print("JSON Decoding err : ", err)
-			http.Error(w, "Error decoding JSON", http.StatusBadRequest)
+			EndpointResponses(w, EndpointResponse{
+				Code: 400,
+				Msg:  "Invalid JSON",
+				Data: nil,
+			})
 			return
 		}
 
 		err = ValidateStruct(product)
 		if err != nil {
 			log.Print("Validation err : ", err)
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			EndpointResponses(w, EndpointResponse{
+				Code: 400,
+				Msg:  err.Error(),
+				Data: nil,
+			})
 			return
 		}
 
-		w.Write([]byte("Product created successfully"))
+		EndpointResponses(w, EndpointResponse{
+			Code: 200,
+			Msg:  "Product created successfully",
+			Data: NewProductResponse{
+				Name:  product.Name,
+				Price: product.Price,
+			},
+		})
 	})
 
 	fmt.Println("Starting server on :8080")

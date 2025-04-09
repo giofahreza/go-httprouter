@@ -35,6 +35,24 @@ type EndpointResponse struct {
 	Data interface{} `json:"data"`
 }
 
+// Prevent to use this on production server
+func CORSMiddleware(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Allow from any origin for development
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		// Handle preflight requests
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		h.ServeHTTP(w, r)
+	})
+}
+
 func EndpointResponses(w http.ResponseWriter, response EndpointResponse) {
 	w.Header().Set("Content-Type", "application/json")
 	if response.Code != 200 {
@@ -99,7 +117,7 @@ func main() {
 	}
 
 	router.GET("/", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		panic("Simulated panic")
+		// panic("Simulated panic")
 		w.Write([]byte("Server up"))
 	})
 
@@ -170,8 +188,10 @@ func main() {
 		})
 	})
 
+	handler := CORSMiddleware(router)
+
 	fmt.Println("Starting server on :8080")
-	if err := http.ListenAndServe(":8080", router); err != nil {
+	if err := http.ListenAndServe(":8080", handler); err != nil {
 		fmt.Println("Error starting server:", err)
 	}
 }

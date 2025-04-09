@@ -2,11 +2,88 @@ openapi: '3.0.3'
 info:
   title: API Title
   version: '1.0'
+  description: API Description
 servers:
-  - url: https://api.server.test/v1
+  - url: http://127.0.0.1:8080
+    description: Local server
+    variables:
+      port:
+        default: '8080'
+        description: Port number
+      scheme:
+        default: http
+        description: Scheme (http or https)
+      host:
+        default: localhost
+        description: Hostname
 paths:
-  /test:
+  /:
     get:
       responses:
         '200':
           description: OK
+  /user/{userId}:
+    get:
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Not Found
+  /user:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  default: John Doe
+                age:
+                  type: integer
+                  default: 25
+                email:
+                  type: string
+                  format: email
+                  default: asdasd@mail.com
+                password:
+                  type: string
+                  format: password
+      responses:
+        '201':
+          description: Created
+        '400':
+          description: Bad Request
+  /product:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  default: Product Name
+                price:
+                  type: number
+                  format: float
+                  default: 19.99
+                stock:
+                  type: boolean
+                  default: true
+      responses:
+        '201':
+          description: Created
+        '400':
+          description: Bad Request
